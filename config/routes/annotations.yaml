@@ -1,0 +1,5 @@
+rest_comments_controller:
+    resource: App\Controller\UsersController
+    prefix: /v2.0
+    type: rest
+    name_prefix: api_v2_
