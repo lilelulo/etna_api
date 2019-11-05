@@ -9,6 +9,11 @@ use Symfony\Component\Routing\Annotation\Route;
 class UsersController extends AbstractFOSRestController
 {
     public $token = '123456789';
+    public function optionsUsersAction(Request $request) {
+        return \FOS\RestBundle\View\View::create([
+        ], \Symfony\Component\HttpFoundation\Response::HTTP_OK);
+    }
+
     public function postUserAction(Request $request) {
         try {
             $user = new \App\Entity\User;
@@ -34,6 +39,11 @@ class UsersController extends AbstractFOSRestController
         }
     }
 
+    public function optionsAuthsAction(Request $request) {
+        return \FOS\RestBundle\View\View::create([
+        ], \Symfony\Component\HttpFoundation\Response::HTTP_OK);
+    }
+
     public function postAuthAction(Request $request) {
         $em = $this->get('doctrine')->getEntityManager();
         $user = $em->getRepository(\App\Entity\User::class)->findOneByUsername($request->get('username'));
@@ -52,6 +62,12 @@ class UsersController extends AbstractFOSRestController
         ], \Symfony\Component\HttpFoundation\Response::HTTP_BAD_REQUEST);            
 
     }
+
+    public function optionsUsersVideosAction($user, Request $request) {
+        return \FOS\RestBundle\View\View::create([
+        ], \Symfony\Component\HttpFoundation\Response::HTTP_OK);
+    }
+
 
     public function postUserVideoAction($user, Request $request) {
         try {
@@ -79,6 +95,8 @@ class UsersController extends AbstractFOSRestController
             ], \Symfony\Component\HttpFoundation\Response::HTTP_BAD_REQUEST);            
         }
     }
+
+
 
     public function patchVideoAction($id, Request $request) {
         try {
