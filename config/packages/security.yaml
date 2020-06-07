@@ -8,6 +8,13 @@ security:
             security: false
         main:
             anonymous: true
+            logout: ~
+            stateless: true
+
+            guard:
+                authenticators:
+                    - App\Services\TokenAuthenticator
+
 
             # activate different ways to authenticate
             # https://symfony.com/doc/current/security.html#firewalls-authentication

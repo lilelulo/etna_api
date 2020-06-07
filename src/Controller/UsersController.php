@@ -2,73 +2,97 @@
 
 namespace App\Controller;
 
+use App\Entity\Token;
+use App\Entity\User;
+use App\Form\UserType;
 use FOS\RestBundle\Controller\AbstractFOSRestController;
+use FOS\RestBundle\View\View;
 use Symfony\Component\HttpFoundation\Request;
-use Symfony\Component\Routing\Annotation\Route;
+use Symfony\Component\HttpFoundation\Response;
+use Sensio\Bundle\FrameworkExtraBundle\Configuration\IsGranted;
+use Sensio\Bundle\FrameworkExtraBundle\Configuration\Security;
 
 class UsersController extends AbstractFOSRestController
 {
-    public $token = '123456789';
-    public function optionsUsersAction(Request $request) {
-        return \FOS\RestBundle\View\View::create([
-        ], \Symfony\Component\HttpFoundation\Response::HTTP_OK);
-    }
-
     public function postUserAction(Request $request) {
-        try {
-            $user = new \App\Entity\User;
-            $user
-                ->setUsername($request->get('username'))
-                ->setEmail($request->get('email'))
-                ->setPassword($request->get('password'))
-                ->setPseudo($request->get('pseudo'))
-                ->setCreatedAt(new \Datetime())
-            ;
-            $em = $this->get('doctrine')->getEntityManager();
-            $em->persist($user);
-            $em->flush();
-            return \FOS\RestBundle\View\View::create([
+        $user = new User();
+        $form = $this->createForm(UserType::class, $user, [
+            'csrf_protection' => false,
+            'method' => 'POST'
+        ]);
+        $form->handleRequest($request);
+        if ($form->isSubmitted() && $form->isValid()) {
+            $user->setCreatedAt(new \DateTime());
+            try {
+                $this->getDoctrine()->getManager()->persist($user);
+                $this->getDoctrine()->getManager()->flush();
+            } catch (\Exception $e) {
+                return View::create([
+                    'message' => 'Bad Request',
+                    'code' => "00002",
+                    'data' => $e
+                ],  Response::HTTP_BAD_REQUEST);
+            }
+            return View::create([
                 'message' => 'OK',
                 'data' => $user
-            ], \Symfony\Component\HttpFoundation\Response::HTTP_OK);
-        } catch (\Exception $e) {
-            return \FOS\RestBundle\View\View::create([
-                'message' => 'bad request',
-                'data' => $e->getMessage()
-            ], \Symfony\Component\HttpFoundation\Response::HTTP_BAD_REQUEST);            
+            ], Response::HTTP_CREATED);
         }
-    }
-
-    public function optionsAuthsAction(Request $request) {
-        return \FOS\RestBundle\View\View::create([
-        ], \Symfony\Component\HttpFoundation\Response::HTTP_OK);
+        return View::create([
+            'message' => 'Bad Request',
+            'code' => "00001",
+            'data' => $form
+        ],  Response::HTTP_BAD_REQUEST);
     }
 
     public function postAuthAction(Request $request) {
-        $em = $this->get('doctrine')->getEntityManager();
-        $user = $em->getRepository(\App\Entity\User::class)->findOneByUsername($request->get('username'));
-        if ($user) {
+        try {
+            $em = $this->get('doctrine')->getEntityManager();
+            $user = $em->getRepository(\App\Entity\User::class)->findOneByUsername($request->get('username'));
+            if ($user->getPassword() != $request->get('password')) {
+                throw new \Exception('password');
+            }
+            $token = (new Token())->setCode(uniqid())->setUser($user)->setExpiredAt(new \DateTime('+1month'));
+            $this->getDoctrine()->getManager()->persist($token);
+            $this->getDoctrine()->getManager()->flush();
             return \FOS\RestBundle\View\View::create([
                 'message' => 'OK',
-                'data' => [
-                    'token' => $this->token, 
-                    'user' => $user
-                ]
-            ], \Symfony\Component\HttpFoundation\Response::HTTP_OK);
+                'data' => $token
+            ], \Symfony\Component\HttpFoundation\Response::HTTP_CREATED);
+        } catch (\Exception $e) {
+            return \FOS\RestBundle\View\View::create([
+                'message' => 'bad request',
+                'code' => '00004',
+                'data' => $e
+            ], \Symfony\Component\HttpFoundation\Response::HTTP_BAD_REQUEST);
+        } catch (\Error $e) {
+            return \FOS\RestBundle\View\View::create([
+                'message' => 'bad request',
+                'code' => '00005',
+                'data' => $e
+            ], \Symfony\Component\HttpFoundation\Response::HTTP_BAD_REQUEST);
         }
-        return \FOS\RestBundle\View\View::create([
-            'message' => 'bad request',
-            'data' => 'Not connect'
-        ], \Symfony\Component\HttpFoundation\Response::HTTP_BAD_REQUEST);            
-
-    }
-
-    public function optionsUsersVideosAction($user, Request $request) {
-        return \FOS\RestBundle\View\View::create([
-        ], \Symfony\Component\HttpFoundation\Response::HTTP_OK);
     }
 
 
+    /**
+     * @Security("cuser == user")
+     */
+    public function deleteUserAction(Request $request, User $cuser) {
+        try {
+            $this->getDoctrine()->getManager()->remove($cuser);
+            $this->getDoctrine()->getManager()->flush();
+            return View::create([],  Response::HTTP_NO_CONTENT);
+        } catch (\Exception $e) {
+            return View::create([
+                'message' => 'Bad Request',
+                'code' => "00002",
+                'data' => $e
+            ],  Response::HTTP_BAD_REQUEST);
+        }
+    }
+
+/*
     public function postUserVideoAction($user, Request $request) {
         try {
             $em = $this->get('doctrine')->getEntityManager();
@@ -118,4 +142,6 @@ class UsersController extends AbstractFOSRestController
             ], \Symfony\Component\HttpFoundation\Response::HTTP_BAD_REQUEST);            
         }
     }
+
+*/
 }

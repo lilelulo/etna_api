@@ -3,9 +3,13 @@
 namespace App\Entity;
 
 use Doctrine\ORM\Mapping as ORM;
+use JMS\Serializer\Annotation\ExclusionPolicy;
+use JMS\Serializer\Annotation\Expose;
+use JMS\Serializer\Annotation\SerializedName;
 
 /**
  * @ORM\Entity(repositoryClass="App\Repository\TokenRepository")
+ * @ExclusionPolicy("all")
  */
 class Token
 {
@@ -23,12 +27,15 @@ class Token
 
     /**
      * @ORM\Column(type="string", length=255)
+     * @Expose
+     * @SerializedName("token")
      */
     private $code;
 
     /**
      * @ORM\ManyToOne(targetEntity="App\Entity\User")
      * @ORM\JoinColumn(nullable=false)
+     * @Expose
      */
     private $user;
 

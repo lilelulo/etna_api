@@ -4,3 +4,8 @@ fos_rest:
     format_listener:
         rules:
             - { path: ^/v2.0, prefer_extension: true, fallback_format: json, priorities: [ json ] }
+    service:
+        inflector: App\Services\Inflector
+
+    serializer:
+        serialize_null: true
