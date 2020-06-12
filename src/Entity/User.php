@@ -7,6 +7,7 @@ use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 
 use JMS\Serializer\Annotation\ExclusionPolicy;
+use JMS\Serializer\Annotation\Groups;
 use JMS\Serializer\Annotation\Expose;
 use Symfony\Component\Security\Core\User\UserInterface;
 
@@ -33,6 +34,8 @@ class User implements UserInterface
     /**
      * @Expose
      * @ORM\Column(type="string", length=255)
+     * @Groups({"list"})
+     *
      */
     private $email;
 
