@@ -52,7 +52,7 @@ class User implements UserInterface
 
     /**
      * @Expose
-     * @ORM\Column(type="string", length=255)
+     * @ORM\Column(type="string", length=255, nullable=true)
      */
     private $pseudo;
 
